@@ -17,6 +17,16 @@ class UserRepository {
     const { rows } = await pool.query(query, [email]);
     return rows[0];
   }
+
+  static async findByTypeExcludingUser(tipo, excludeUserId) {
+    const query = `
+    SELECT * FROM usuario
+    WHERE tipo = $1 AND id != $2;
+  `;
+
+    const { rows } = await pool.query(query, [tipo, excludeUserId]);
+    return rows;
+  }
 }
 
 export default UserRepository;

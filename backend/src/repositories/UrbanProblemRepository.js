@@ -163,6 +163,100 @@ class UrbanProblemRepository {
       },
     };
   }
+
+  static async getRegionsByProblemType() {
+    const query = `
+    SELECT 
+      r.id_reg AS id,
+      r.sigla,
+      r.nome,
+      r.area_km2,
+      COUNT(CASE WHEN p.tipo = 'buraco' THEN 1 END) AS total_buracos,
+      COUNT(CASE WHEN p.tipo = 'iluminacao_publica' THEN 1 END) AS total_iluminacao,
+      ST_AsGeoJSON(ST_Transform(r.geom, 4326)) AS geom,
+      (COUNT(CASE WHEN p.tipo = 'buraco' THEN 1 END) + 
+       COUNT(CASE WHEN p.tipo = 'iluminacao_publica' THEN 1 END)) AS total_ocorrencias
+    FROM regional r
+    LEFT JOIN ocorrencia o 
+      ON ST_Intersects(o.geom, r.geom)
+    LEFT JOIN problema p 
+      ON o.problema_id = p.id
+    GROUP BY r.id_reg, r.sigla, r.nome, r.area_km2, r.geom
+    ORDER BY total_ocorrencias DESC;
+  `;
+
+    const { rows } = await pool.query(query);
+    return rows.map((row) => ({
+      regiao: {
+        id: row.id,
+        sigla: row.sigla,
+        nome: row.nome,
+        area_km2: row.area_km2,
+        geom: JSON.parse(row.geom),
+      },
+      ocorrencias: {
+        buracos: row.total_buracos,
+        iluminacao_publica: row.total_iluminacao,
+        total: row.total_ocorrencias,
+      },
+    }));
+  }
+
+  static async updateProblem(id, updateData) {
+    const { descricao, largura, comprimento, profundidade, status } =
+      updateData;
+
+    const problemaQuery = `
+    UPDATE problema
+    SET descricao = COALESCE($1, descricao)
+    WHERE id = $2
+    RETURNING *;
+  `;
+    await pool.query(problemaQuery, [descricao, id]);
+
+    const problema = await this.findProblemById(id);
+    if (problema.tipo === "buraco") {
+      const buracoQuery = `
+      UPDATE buraco
+      SET 
+        largura = COALESCE($1, largura),
+        comprimento = COALESCE($2, comprimento),
+        profundidade = COALESCE($3, profundidade)
+      WHERE id = $4;
+    `;
+      await pool.query(buracoQuery, [
+        largura,
+        comprimento,
+        profundidade,
+        problema.buraco_id,
+      ]);
+    } else if (problema.tipo === "iluminacao_publica") {
+      const iluminacaoQuery = `
+      UPDATE iluminacao_publica
+      SET status = COALESCE($1, status)
+      WHERE id = $2;
+    `;
+      await pool.query(iluminacaoQuery, [
+        status,
+        problema.iluminacao_publica_id,
+      ]);
+    }
+  }
+
+  static async findProblemById(id) {
+    const query = `
+    SELECT 
+      p.id,
+      p.tipo,
+      p.buraco_id,
+      p.iluminacao_publica_id
+    FROM problema p
+    WHERE p.id = $1;
+  `;
+
+    const { rows } = await pool.query(query, [id]);
+    return rows[0];
+  }
 }
 
 export default UrbanProblemRepository;

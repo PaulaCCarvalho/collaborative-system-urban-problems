@@ -48,6 +48,10 @@ class UrbanProblemService {
       );
     }
   }
+
+  static async getRegionsByProblemType() {
+    return UrbanProblemRepository.getRegionsByProblemType();
+  }
 }
 
 export default UrbanProblemService;

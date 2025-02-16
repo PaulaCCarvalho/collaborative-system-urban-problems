@@ -20,7 +20,7 @@ const PotholeSchema = UrbanProblemSchema.append({
 const LightingSchema = UrbanProblemSchema.append({
   tipo: Joi.string().valid("iluminacao_publica").required(),
   status: Joi.string()
-    .valid("funcionando", "apagado", "piscando", "danificado", "manutencao")
+    .valid("Funcionando", "Apagado", "Piscando", "Danificado", "Em manutenção")
     .required()
     .messages({
       "any.only": "Status inválido para iluminação pública",
