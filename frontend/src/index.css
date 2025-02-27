@@ -1,1 +1,14 @@
+.leaflet-popup-content-wrapper {
+    @apply rounded-lg shadow-lg;
+}
+
+.leaflet-popup-content {
+    @apply m-2;
+}
+
+.leaflet-marker-icon {
+    @apply w-6 h-6;
+}
+
 @import "tailwindcss"
+

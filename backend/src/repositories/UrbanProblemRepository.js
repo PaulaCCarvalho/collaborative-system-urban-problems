@@ -154,7 +154,7 @@ class UrbanProblemRepository {
       problema: {
         tipo: "iluminacao_publica",
         descricao: row.problema_descricao,
-        status: row.status_problema,
+        status: row.problema_status,
         data_registro: row.data_registro,
         poste: {
           id: row.id_poste_i,
@@ -195,9 +195,9 @@ class UrbanProblemRepository {
         geom: JSON.parse(row.geom),
       },
       ocorrencias: {
-        buracos: row.total_buracos,
-        iluminacao_publica: row.total_iluminacao,
-        total: row.total_ocorrencias,
+        buracos: parseInt(row.total_buracos),
+        iluminacao_publica: parseInt(row.total_iluminacao),
+        total: parseInt(row.total_ocorrencias),
       },
     }));
   }

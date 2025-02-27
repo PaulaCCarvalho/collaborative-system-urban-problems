@@ -36,7 +36,7 @@ class ReportService {
       autor_id: usuario_id,
     });
 
-    return { ...reportResult, nivel: criticidade.nivel };
+    return { ...reportResult, nivel: criticidade.nivel, tipo: problema.tipo };
   }
 
   static async getReportWithDetails(id) {
@@ -85,10 +85,6 @@ class ReportService {
   static async getNeighborhoodsWithReports({ longitude, latitude, raio, min }) {
     if (!longitude || !latitude || !raio || !min) {
       throw new Error("Todos os parâmetros são obrigatórios");
-    }
-
-    if (raio > 10000) {
-      throw new Error("O raio máximo permitido é 10.000 metros");
     }
 
     return ReportRepository.getNeighborhoodsWithReports({

@@ -28,7 +28,14 @@ const FilterSchema = Joi.object({
     .optional()
     .allow(null),
   days: Joi.number().integer().min(1).optional().allow(null),
-}).or("status", "days");
+  tipo: Joi.alternatives()
+    .try(
+      Joi.array().items(Joi.string().valid("buraco", "iluminacao_publica")),
+      Joi.string().valid("buraco", "iluminacao_publica")
+    )
+    .optional()
+    .allow(null),
+}).or("status", "days", "tipo");
 
 const UpdateReportSchema = Joi.object({
   titulo: Joi.string().optional(),

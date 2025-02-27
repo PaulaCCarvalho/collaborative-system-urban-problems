@@ -7,7 +7,8 @@ class CriticalAreaService {
     try {
       const institutions = await InstitutionService.getNearbyAllInstitutions(
         longitude,
-        latitude
+        latitude,
+        5000
       );
 
       const totalInstitutions =

@@ -4,7 +4,7 @@ class InstitutionRepository {
   static async findNearbyEducationalInstitutions(
     longitude,
     latitude,
-    raio = 4000
+    raio = 1000000000
   ) {
     const query = `
       WITH todas_instituicoes_ensino AS (
@@ -45,7 +45,7 @@ class InstitutionRepository {
   static async findNearbyHealthcareInstitutions(
     longitude,
     latitude,
-    raio = 4000
+    raio = 1000000000
   ) {
     const query = `
       WITH todas_instituicoes_saude AS (

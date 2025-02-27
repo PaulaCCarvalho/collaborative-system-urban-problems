@@ -10,7 +10,8 @@ class ReportRepository {
                 ST_Transform(ST_SetSRID(ST_MakePoint($2, $3), 4326), 31983),
                 $4, $5, $6
             )
-            RETURNING id, timestamp, status, problema_id, criticidade_id, titulo; 
+            RETURNING id, timestamp, status, problema_id, criticidade_id,
+            titulo, ST_AsGeoJSON(ST_Transform(geom, 4326)) AS geom; 
         `;
 
     const values = [
@@ -24,7 +25,7 @@ class ReportRepository {
 
     const { rows } = await pool.query(query, values);
 
-    return rows[0];
+    return { ...rows[0], geom: JSON.parse(rows[0].geom) };
   }
 
   static async getReportById(id) {
@@ -70,6 +71,7 @@ class ReportRepository {
       b.id AS bairro_id,
       b.nome AS bairro_nome,
       b.area_km2,
+      ST_AsGeoJSON(ST_Transform(b.geom, 4326)) AS geom_bairro,
       COUNT(o.id) AS total_ocorrencias,
       ROUND(
         COUNT(o.id) / GREATEST(b.area_km2, 0.01),
@@ -94,13 +96,14 @@ class ReportRepository {
     const { rows } = await pool.query(query);
     return rows.map((row) => ({
       bairro: {
-        id: row.id,
-        nome: row.nome,
+        id: row.bairro_id,
+        nome: row.bairro_nome,
         area_km2: row.area_km2,
+        geom: JSON.parse(row.geom_bairro),
       },
       metricas: {
-        total_ocorrencias: row.total_ocorrencias,
-        densidade_km2: row.densidade_km2,
+        total_ocorrencias: parseInt(row.total_ocorrencias),
+        densidade_km2: parseFloat(row.densidade_km2),
       },
       ocorrencias: row.ocorrencias.map((ocorrencia) => ({
         id: ocorrencia.id,
@@ -177,7 +180,12 @@ class ReportRepository {
     }));
   }
 
-  static async getNeighborhoodsWithReports({ longitude, latitude, raio, min }) {
+  static async getNeighborhoodsWithReports({
+    longitude,
+    latitude,
+    raio = 100000000,
+    min=1,
+  }) {
     const query = `
     WITH ponto_referencia AS (
       SELECT ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography AS geom
@@ -224,7 +232,7 @@ class ReportRepository {
         geom: JSON.parse(row.geom),
       },
       metricas: {
-        ocorrencias: row.total_ocorrencias,
+        total_ocorrencias: row.total_ocorrencias,
       },
     }));
   }
@@ -277,7 +285,13 @@ class ReportRepository {
   `;
 
     const { rows } = await pool.query(query);
-    return rows;
+
+    const result = rows.reduce((acc, row) => {
+      acc[row.tipo] = parseInt(row.total, 10);
+      return acc;
+    }, {});
+
+    return result;
   }
 
   static async findByFilters(filters) {
@@ -296,6 +310,12 @@ class ReportRepository {
         `o.timestamp >= CURRENT_DATE - (INTERVAL '1 day' * $${paramIndex})`
       );
       params.push(filters.days);
+      paramIndex++;
+    }
+
+    if (filters.tipo && filters.tipo.length > 0) {
+      whereClauses.push(`p.tipo = ANY($${paramIndex})`);
+      params.push(filters.tipo);
       paramIndex++;
     }
 

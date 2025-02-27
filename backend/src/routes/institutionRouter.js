@@ -1,8 +1,7 @@
-// src/routes/institutionRouter.js
 import express from "express";
 import InstitutionController from "../controllers/InstitutionController.js";
 
-const router = express.Router(); // Cria o router diretamente
+const router = express.Router(); 
 
 router
   .get(
@@ -15,4 +14,4 @@ router
   )
   .get("/instituicoes/proximas", InstitutionController.getNearbyInstitutions);
 
-export default router; // Exporta o router diretamente
+export default router; 

@@ -144,11 +144,14 @@ class ReportController {
 
   static async listByFilters(req, res) {
     try {
-      const { status, days } = req.query;
+      const { status, days, tipo } = req.query;
+
+     const tipos = tipo ? (Array.isArray(tipo) ? tipo : tipo.split(",")) : null;
 
       const filters = {
         status: status || null,
         days: days ? parseInt(days, 10) : null,
+        tipo: tipos,
       };
 
       const reports = await ReportService.listByFilters(filters);

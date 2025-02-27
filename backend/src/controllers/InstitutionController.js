@@ -1,4 +1,3 @@
-// src/controllers/InstitutionController.js
 import InstitutionService from "../services/InstitutionService.js";
 
 class InstitutionController {
@@ -58,7 +57,7 @@ class InstitutionController {
 
   static async getNearbyInstitutions(req, res) {
     try {
-      const { longitude, latitude, raio } = req.query;
+      const { longitude, latitude, raio, tipo } = req.query;
       const parsedLng = parseFloat(longitude);
       const parsedLat = parseFloat(latitude);
       let parsedRaio = parseFloat(raio);
@@ -71,11 +70,41 @@ class InstitutionController {
         parsedRaio = undefined;
       }
 
-      const institutions = await InstitutionService.getNearbyAllInstitutions(
-        parsedLng,
-        parsedLat,
-        parsedRaio
-      );
+      const tiposValidos = ["saude", "ensino", "ambas"];
+      if (tipo && !tiposValidos.includes(tipo)) {
+        throw new Error(
+          "Tipo de instituição inválido. Use 'saude', 'ensino' ou 'ambas'."
+        );
+      }
+
+      let institutions;
+      switch (tipo) {
+        case "saude":
+          institutions =
+            await InstitutionService.getNearbyHealthcareInstitutions(
+              parsedLng,
+              parsedLat,
+              parsedRaio
+            );
+          break;
+        case "ensino":
+          institutions =
+            await InstitutionService.getNearbyEducationalInstitutions(
+              parsedLng,
+              parsedLat,
+              parsedRaio
+            );
+          break;
+        case "ambas":
+        default:
+          institutions = await InstitutionService.getNearbyAllInstitutions(
+            parsedLng,
+            parsedLat,
+            parsedRaio
+          );
+          break;
+      }
+
       return res.json(institutions);
     } catch (error) {
       return res.status(400).json({ error: error.message });
